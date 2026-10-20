@@ -1,0 +1,42 @@
+{
+  "task_id": "23060073c38a484bb30e7c93018c9430",
+  "status": "succeeded",
+  "graph": {
+    "graph_id": "aad",
+    "reason": "任务需要营销、犹豫客户信任修复与售后投诉口径三方共同判断行动先后和验证事项，AAD 盲起草后交流适合多领域相互约束下的协调策略制定。",
+    "source": "llm",
+    "collaboration": "aad",
+    "agents": [
+      "marketing",
+      "hesitant",
+      "complaints"
+    ],
+    "rounds": 2,
+    "execution_mode": "parallel",
+    "fallback_reason": null
+  },
+  "model_requests": 8,
+  "model_request_breakdown": {
+    "graph_selection": 1,
+    "professional": 6,
+    "aggregation": 1
+  },
+  "total_tokens": 17799,
+  "first_round_blind": true,
+  "preserved_final_roles": [
+    "marketing",
+    "hesitant",
+    "complaints"
+  ],
+  "report_sections": {
+    "core_issues": 3,
+    "connections": 3,
+    "conflicts": 2,
+    "actions": 6,
+    "verification": 4
+  },
+  "python_tests_passed": 48,
+  "presentation_tests_passed": 3,
+  "secret_scan_passed": true,
+  "secret_leak_paths": []
+}

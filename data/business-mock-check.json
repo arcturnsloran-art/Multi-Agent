@@ -1,0 +1,110 @@
+{
+  "task_id": "fe59612ca1924a6d8c303539e8b9d006",
+  "provider": "mock",
+  "status": "succeeded",
+  "collaboration": "independent",
+  "steps": [
+    {
+      "agent_id": "marketing",
+      "round_no": 1,
+      "phase": "draft",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "hesitant",
+      "round_no": 1,
+      "phase": "draft",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "complaints",
+      "round_no": 1,
+      "phase": "draft",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    }
+  ],
+  "result": {
+    "summary": "营销 Agent：\n[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。\n\n摇摆户 Agent：\n[Mock 预设示例] 先验证透墨情况与售后规则，再作购买决定。\n\n客户投诉 Agent：\n[Mock 预设示例] 先核实包装损伤情况，说明可选处理流程。",
+    "data": {
+      "aggregation": "deterministic",
+      "agents": {
+        "marketing": {
+          "summary": "[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。",
+          "data": {
+            "target_audience": "学生",
+            "selling_points": [
+              "价格与使用场景"
+            ],
+            "actions": [
+              "发布试写视频",
+              "按预算测试推广渠道"
+            ]
+          }
+        },
+        "hesitant": {
+          "summary": "[Mock 预设示例] 先验证透墨情况与售后规则，再作购买决定。",
+          "data": {
+            "concerns": [
+              "纸张透墨"
+            ],
+            "decision_conditions": [
+              "看到试写证据"
+            ],
+            "questions": [
+              "常用笔型是否适用？"
+            ]
+          }
+        },
+        "complaints": {
+          "summary": "[Mock 预设示例] 先核实包装损伤情况，说明可选处理流程。",
+          "data": {
+            "issues": [
+              "运输挤压"
+            ],
+            "priority": "中",
+            "actions": [
+              "核实虚构订单与图片",
+              "按售后规则提供选项"
+            ],
+            "reply_draft": "收到您的反馈，我们会先核实损伤情况并说明处理选项。"
+          }
+        }
+      },
+      "collaboration": "independent",
+      "rounds": 1,
+      "consensus_claimed": false,
+      "source_steps": [
+        "marketing",
+        "hesitant",
+        "complaints"
+      ]
+    }
+  },
+  "contexts": [
+    {
+      "step_id": "marketing",
+      "round_no": 1,
+      "visible_senders": [],
+      "message_count": 2
+    },
+    {
+      "step_id": "hesitant",
+      "round_no": 1,
+      "visible_senders": [],
+      "message_count": 2
+    },
+    {
+      "step_id": "complaints",
+      "round_no": 1,
+      "visible_senders": [],
+      "message_count": 2
+    }
+  ],
+  "model_calls": []
+}

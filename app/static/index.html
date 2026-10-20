@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>协作分析工作台</title><link rel="stylesheet" href="/static/workbench.css"></head>
+<body><main>
+<header class="topbar"><div class="brand"><span class="brand-mark">M</span><div><strong>协作分析工作台</strong><small>MULTI-AGENT · LOCAL WORKSPACE</small></div></div><span id="provider-note" class="badge">Mock · 本地演示</span></header>
+<section class="intro"><div><span class="eyebrow">COLLABORATION / INSIGHT</span><h1>从专业观点，到共同策略。</h1><p>观察独立判断如何在信息交换中演变，追溯每个结论的来源。</p></div><a class="text-link" href="/docs" target="_blank">接口文档 ↗</a></section>
+<div class="workspace"><aside>
+<form id="form" class="panel"><div class="section-title"><span class="step-number">01</span><h2>分析设置</h2></div>
+<label>协作流程<select id="workflow"><option value="business">经营策略 · 三个业务 Agent</option><option value="classic">原始需求分析演示</option></select></label>
+<label>执行模式<select id="provider"><option value="mock">Mock · 本地预设结果</option><option value="deepseek">DeepSeek · 真实 API</option></select></label>
+<div id="routing-controls"></div>
+<label>协作模式<select id="collaboration"><option value="independent">Independent · 独立分析</option><option value="sequential_debate">Sequential Debate · 顺序辩论</option><option value="aad">AAD · 独立起草后辩论</option></select></label>
+<div class="field-row"><label>总轮数<input id="rounds" type="number" min="1" max="3" value="1" disabled></label><label>调用顺序<select id="mode"><option value="parallel">并行</option><option value="serial">依次独立调用</option></select></label></div>
+<p id="protocol-note" class="hint">三者独立分析案例，不读取彼此答案。</p><p id="config-note" class="hint">读取本机配置状态…</p>
+<label for="prompt">任务案例</label><textarea id="prompt" rows="7" maxlength="4000" required>【纯虚构经营案例】星芽文具店销售39元笔记本礼盒，可用营销预算1000元。近四周访问量大致稳定，但投放点击率下降；犹豫客户反复询问透墨问题后未下单，存在流失风险。另有运输挤压投诉，客服处理口径尚未统一。团队希望恢复营销效果，但担心售后承载与购买信任。请共同制定协调经营策略，明确分歧、行动顺序和待验证事项。具体指标与因果关系未知，不得编造。</textarea>
+<div id="aggregation-controls"></div>
+<details class="advanced"><summary>高级设置与故障演示</summary><label>Mock 故障<select id="fault"><option value="none">正常执行</option><option value="once">第二个 Agent 首次失败</option><option value="always">第二个 Agent 持续失败</option><option value="timeout">第二个 Agent 超时</option></select></label><div class="field-row"><label>单次超时 / 秒<input id="timeout" type="number" min="0.05" max="120" step="0.05" value="5"></label><label>最多重试<input id="retries" type="number" min="0" max="3" value="1"></label></div></details>
+<details class="advanced"><summary>策略版本 · 外部接入预留</summary><p class="hint">仅记录和传递版本标识，本地不自动加载或进化策略。</p><div id="strategy-controls"></div></details><button id="submit" type="submit" class="primary">开始分析 <span>↗</span></button><p id="notice" class="error" role="alert"></p></form>
+<details class="panel history-panel"><summary>最近任务 · 打开已有分析</summary><div id="history"></div></details>
+</aside><section class="analysis">
+<section class="panel overview"><div class="section-title"><div><span class="eyebrow">EXECUTION OVERVIEW</span><h2>执行概览</h2></div><span id="status" class="badge pending">等待提交</span></div><div class="metrics"><div><small>协作模式</small><strong id="metric-protocol">Independent</strong></div><div><small>当前轮次</small><strong id="metric-round">—</strong></div><div><small>Agent 调用尝试</small><strong id="metric-agents">0</strong></div><div><small>模型请求尝试</small><strong id="metric-model">0</strong></div></div><details class="execution-details"><summary>执行顺序与路由详情</summary><p id="plan" class="hint">提交任务后查看实际执行顺序。</p><div id="selection" class="selection-note" hidden></div><small id="taskid" class="task-id"></small><div id="flow" class="flow"></div></details></section>
+<details class="panel"><summary>Agent 能力说明</summary><div id="agents" class="agents"></div></details>
+<section class="panel"><div class="section-title"><div><span class="eyebrow">ROUND BY ROUND</span><h2>每轮 Agent 输出</h2></div><span class="muted">切换轮次 · 逐项查看</span></div><div id="round-view" class="empty">选择任务后，按轮次逐项查看各 Agent 的实际输出。</div></section>
+<details class="panel report-panel"><summary>最终汇总报告 <span id="report-label" class="badge">待生成</span></summary><div id="result" class="empty">任务结束后可查看汇总。</div></details>
+<details class="panel trace-panel"><summary>执行依据与详细轨迹 <span class="muted">完整状态、消息、错误与模型用量</span></summary><a id="evolution-export" class="text-link" target="_blank" hidden>导出进化事件与完整轨迹 ↗</a><div id="events"></div></details>
+</section></div><footer>本地研究 Demo · Mock 为可复现示例 · 模型观点需验证 · API Key 仅由服务端读取</footer>
+</main><script src="/static/rounds.js"></script><script src="/static/workbench.js"></script><script src="/static/controls.js"></script><script src="/static/collaboration.js"></script></body></html>

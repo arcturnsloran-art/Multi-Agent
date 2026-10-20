@@ -1,0 +1,241 @@
+{
+  "task_id": "bf21a795e60740dd8258572606f72122",
+  "provider": "mock",
+  "status": "succeeded",
+  "collaboration": "sequential_debate",
+  "steps": [
+    {
+      "agent_id": "marketing",
+      "round_no": 1,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "hesitant",
+      "round_no": 1,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "complaints",
+      "round_no": 1,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "marketing",
+      "round_no": 2,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "hesitant",
+      "round_no": 2,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "complaints",
+      "round_no": 2,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    }
+  ],
+  "result": {
+    "summary": "营销 Agent：\n[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。 第 2 轮收到 2 条公开结果，保留本角色待核实点。\n\n摇摆户 Agent：\n[Mock 预设示例] 先验证透墨情况与售后规则，再作购买决定。 第 2 轮收到 3 条公开结果，保留本角色待核实点。\n\n客户投诉 Agent：\n[Mock 预设示例] 先核实包装损伤情况，说明可选处理流程。 第 2 轮收到 4 条公开结果，保留本角色待核实点。",
+    "data": {
+      "aggregation": "deterministic",
+      "agents": {
+        "marketing": {
+          "summary": "[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。 第 2 轮收到 2 条公开结果，保留本角色待核实点。",
+          "data": {
+            "target_audience": "学生",
+            "selling_points": [
+              "价格与使用场景"
+            ],
+            "actions": [
+              "发布试写视频",
+              "按预算测试推广渠道"
+            ],
+            "protocol_observation": {
+              "round_no": 2,
+              "phase": "debate",
+              "received_public_messages": [
+                {
+                  "message_id": "fd840027348840e0ae2c8400dbd8a9fc",
+                  "sender": "hesitant",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 先验证透墨情况与售后规则，再作购买决定。 第 1 轮收到 1 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "289d06aa9eb749ab97fb51f1cd9bc2a5",
+                  "sender": "complaints",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 先核实包装损伤情况，说明可选处理流程。 第 1 轮收到 2 条公开结果，保留本角色待核实点。"
+                }
+              ]
+            }
+          }
+        },
+        "hesitant": {
+          "summary": "[Mock 预设示例] 先验证透墨情况与售后规则，再作购买决定。 第 2 轮收到 3 条公开结果，保留本角色待核实点。",
+          "data": {
+            "concerns": [
+              "纸张透墨"
+            ],
+            "decision_conditions": [
+              "看到试写证据"
+            ],
+            "questions": [
+              "常用笔型是否适用？"
+            ],
+            "protocol_observation": {
+              "round_no": 2,
+              "phase": "debate",
+              "received_public_messages": [
+                {
+                  "message_id": "d3481eb23f964b1097aa8802395074bc",
+                  "sender": "marketing",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "289d06aa9eb749ab97fb51f1cd9bc2a5",
+                  "sender": "complaints",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 先核实包装损伤情况，说明可选处理流程。 第 1 轮收到 2 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "81587891f40c46cba63b911f5d8023df",
+                  "sender": "marketing",
+                  "round_no": 2,
+                  "summary": "[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+                }
+              ]
+            }
+          }
+        },
+        "complaints": {
+          "summary": "[Mock 预设示例] 先核实包装损伤情况，说明可选处理流程。 第 2 轮收到 4 条公开结果，保留本角色待核实点。",
+          "data": {
+            "issues": [
+              "运输挤压"
+            ],
+            "priority": "中",
+            "actions": [
+              "核实虚构订单与图片",
+              "按售后规则提供选项"
+            ],
+            "reply_draft": "收到您的反馈，我们会先核实损伤情况并说明处理选项。",
+            "protocol_observation": {
+              "round_no": 2,
+              "phase": "debate",
+              "received_public_messages": [
+                {
+                  "message_id": "d3481eb23f964b1097aa8802395074bc",
+                  "sender": "marketing",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "fd840027348840e0ae2c8400dbd8a9fc",
+                  "sender": "hesitant",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 先验证透墨情况与售后规则，再作购买决定。 第 1 轮收到 1 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "81587891f40c46cba63b911f5d8023df",
+                  "sender": "marketing",
+                  "round_no": 2,
+                  "summary": "[Mock 预设示例] 展示产品证据，围绕学生客群开展小规模推广。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "232d146400154651a4f920568f0c0ded",
+                  "sender": "hesitant",
+                  "round_no": 2,
+                  "summary": "[Mock 预设示例] 先验证透墨情况与售后规则，再作购买决定。 第 2 轮收到 3 条公开结果，保留本角色待核实点。"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "collaboration": "sequential_debate",
+      "rounds": 2,
+      "consensus_claimed": false,
+      "source_steps": [
+        "r2.marketing",
+        "r2.hesitant",
+        "r2.complaints"
+      ]
+    }
+  },
+  "contexts": [
+    {
+      "step_id": "r1.marketing",
+      "round_no": 1,
+      "visible_senders": [],
+      "message_count": 2
+    },
+    {
+      "step_id": "r1.hesitant",
+      "round_no": 1,
+      "visible_senders": [
+        "marketing"
+      ],
+      "message_count": 2
+    },
+    {
+      "step_id": "r1.complaints",
+      "round_no": 1,
+      "visible_senders": [
+        "marketing",
+        "hesitant"
+      ],
+      "message_count": 2
+    },
+    {
+      "step_id": "r2.marketing",
+      "round_no": 2,
+      "visible_senders": [
+        "hesitant",
+        "complaints"
+      ],
+      "message_count": 4
+    },
+    {
+      "step_id": "r2.hesitant",
+      "round_no": 2,
+      "visible_senders": [
+        "marketing",
+        "complaints",
+        "marketing"
+      ],
+      "message_count": 4
+    },
+    {
+      "step_id": "r2.complaints",
+      "round_no": 2,
+      "visible_senders": [
+        "marketing",
+        "hesitant",
+        "marketing",
+        "hesitant"
+      ],
+      "message_count": 4
+    }
+  ],
+  "model_calls": []
+}

@@ -1,0 +1,31 @@
+{
+  "task_id": "407ad5949f5d42f38c6e5d288aa92513",
+  "status": "succeeded",
+  "provider": "deepseek",
+  "collaboration": "aad",
+  "model_calls": 6,
+  "attempt_errors": 0,
+  "discussion_types": [
+    "initial_view",
+    "initial_view",
+    "initial_view",
+    "challenge",
+    "revision",
+    "revision",
+    "feedback",
+    "revision",
+    "challenge"
+  ],
+  "all_revisions_have_reason": true,
+  "all_decisions_present": true,
+  "evolution_type": "task_completed",
+  "strategy_versions": {
+    "marketing": "junior-v1",
+    "complaints": "junior-v1",
+    "hesitant": "junior-v1"
+  },
+  "evaluation": "not_evaluated",
+  "trajectory_count": 69,
+  "python_tests": 58,
+  "frontend_tests": 5
+}

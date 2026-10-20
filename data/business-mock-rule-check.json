@@ -1,0 +1,485 @@
+{
+  "task_id": "9333a064f48b4d12a067eefe3f3867ad",
+  "provider": "mock",
+  "status": "succeeded",
+  "collaboration": "independent",
+  "graph_selection": {
+    "graph_id": "aad",
+    "reason": "涉及多个业务领域与协调约束，先独立起草再交流，减少首个答案的锚定影响。",
+    "source": "rule",
+    "collaboration": "aad",
+    "agents": [
+      "marketing",
+      "hesitant",
+      "complaints"
+    ],
+    "rounds": 2,
+    "execution_mode": "parallel",
+    "fallback_reason": null
+  },
+  "steps": [
+    {
+      "agent_id": "marketing",
+      "round_no": 1,
+      "phase": "draft",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "hesitant",
+      "round_no": 1,
+      "phase": "draft",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "complaints",
+      "round_no": 1,
+      "phase": "draft",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "marketing",
+      "round_no": 2,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "hesitant",
+      "round_no": 2,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "agent_id": "complaints",
+      "round_no": 2,
+      "phase": "debate",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    }
+  ],
+  "result": {
+    "summary": "本地模板汇总：保留各角色判断，先核验关键约束，再按优先级验证行动建议。",
+    "data": {
+      "aggregation": "deterministic",
+      "agents": {
+        "marketing": {
+          "summary": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。",
+          "data": {
+            "target_audience": "学生",
+            "selling_points": [
+              "价格与使用场景"
+            ],
+            "actions": [
+              "发布试写视频",
+              "按预算测试推广渠道"
+            ],
+            "findings": [
+              "点击率下降的原因尚未核实",
+              "推广与服务承载需要协调"
+            ],
+            "recommendations": [
+              "参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。"
+            ],
+            "disagreements": [
+              "投放恢复速度与售后修复速度可能冲突"
+            ],
+            "references": [
+              {
+                "message_id": "6addabac53fa4f1ab2f6e6159611bb84",
+                "quote": "[Mock 预设示例] 犹豫客户需要产品证据与明确处理口径，不能仅依赖更多曝光。 第 1 轮收到 0 条公开结果，保留本角色待核实点。",
+                "relation": "coordinate",
+                "viewpoint": "把该角色指出的约束纳入本角色行动顺序。"
+              },
+              {
+                "message_id": "f6785cefaf734bf485fe74608d143359",
+                "quote": "[Mock 预设示例] 先核验包装投诉并明确处理边界，避免推广放大服务压力。 第 1 轮收到 0 条公开结果，保留本角色待核实点。",
+                "relation": "coordinate",
+                "viewpoint": "把该角色指出的约束纳入本角色行动顺序。"
+              }
+            ],
+            "revisions": [
+              "参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。"
+            ],
+            "protocol_observation": {
+              "round_no": 2,
+              "phase": "debate",
+              "received_public_messages": [
+                {
+                  "message_id": "6addabac53fa4f1ab2f6e6159611bb84",
+                  "sender": "hesitant",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 犹豫客户需要产品证据与明确处理口径，不能仅依赖更多曝光。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "f6785cefaf734bf485fe74608d143359",
+                  "sender": "complaints",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 先核验包装投诉并明确处理边界，避免推广放大服务压力。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                }
+              ]
+            }
+          }
+        },
+        "hesitant": {
+          "summary": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。",
+          "data": {
+            "concerns": [
+              "纸张透墨"
+            ],
+            "decision_conditions": [
+              "看到试写证据"
+            ],
+            "questions": [
+              "常用笔型是否适用？"
+            ],
+            "findings": [
+              "透墨顾虑可能阻碍购买，因果待验证"
+            ],
+            "recommendations": [
+              "参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。"
+            ],
+            "disagreements": [
+              "新增曝光不一定优先于信任修复"
+            ],
+            "references": [
+              {
+                "message_id": "f6785cefaf734bf485fe74608d143359",
+                "quote": "[Mock 预设示例] 先核验包装投诉并明确处理边界，避免推广放大服务压力。 第 1 轮收到 0 条公开结果，保留本角色待核实点。",
+                "relation": "coordinate",
+                "viewpoint": "把该角色指出的约束纳入本角色行动顺序。"
+              },
+              {
+                "message_id": "beabef45885e48c6816dedd3fea60756",
+                "quote": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。",
+                "relation": "coordinate",
+                "viewpoint": "把该角色指出的约束纳入本角色行动顺序。"
+              }
+            ],
+            "revisions": [
+              "参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。"
+            ],
+            "protocol_observation": {
+              "round_no": 2,
+              "phase": "debate",
+              "received_public_messages": [
+                {
+                  "message_id": "000a095e156d4f8789943245ca6148ed",
+                  "sender": "marketing",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 建议优先验证营销内容与购买信任，再决定是否扩大投放。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "f6785cefaf734bf485fe74608d143359",
+                  "sender": "complaints",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 先核验包装投诉并明确处理边界，避免推广放大服务压力。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "beabef45885e48c6816dedd3fea60756",
+                  "sender": "marketing",
+                  "round_no": 2,
+                  "summary": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+                }
+              ]
+            }
+          }
+        },
+        "complaints": {
+          "summary": "[Mock 预设示例] 参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。 第 2 轮收到 4 条公开结果，保留本角色待核实点。",
+          "data": {
+            "issues": [
+              "运输挤压"
+            ],
+            "priority": "中",
+            "actions": [
+              "核实虚构订单与图片",
+              "按售后规则提供选项"
+            ],
+            "reply_draft": "收到您的反馈，我们会先核实损伤情况并说明处理选项。",
+            "findings": [
+              "包装投诉与处理口径不清形成服务约束"
+            ],
+            "recommendations": [
+              "参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。"
+            ],
+            "disagreements": [
+              "追加投放与当前服务承载存在潜在冲突"
+            ],
+            "references": [
+              {
+                "message_id": "beabef45885e48c6816dedd3fea60756",
+                "quote": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。",
+                "relation": "coordinate",
+                "viewpoint": "把该角色指出的约束纳入本角色行动顺序。"
+              },
+              {
+                "message_id": "505da4e272994375824ca799d1ddd4c7",
+                "quote": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。",
+                "relation": "coordinate",
+                "viewpoint": "把该角色指出的约束纳入本角色行动顺序。"
+              }
+            ],
+            "revisions": [
+              "参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。"
+            ],
+            "protocol_observation": {
+              "round_no": 2,
+              "phase": "debate",
+              "received_public_messages": [
+                {
+                  "message_id": "000a095e156d4f8789943245ca6148ed",
+                  "sender": "marketing",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 建议优先验证营销内容与购买信任，再决定是否扩大投放。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "6addabac53fa4f1ab2f6e6159611bb84",
+                  "sender": "hesitant",
+                  "round_no": 1,
+                  "summary": "[Mock 预设示例] 犹豫客户需要产品证据与明确处理口径，不能仅依赖更多曝光。 第 1 轮收到 0 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "beabef45885e48c6816dedd3fea60756",
+                  "sender": "marketing",
+                  "round_no": 2,
+                  "summary": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+                },
+                {
+                  "message_id": "505da4e272994375824ca799d1ddd4c7",
+                  "sender": "hesitant",
+                  "round_no": 2,
+                  "summary": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "report": {
+        "core_issues": [
+          {
+            "text": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。",
+            "nature": "assessment",
+            "evidence": [
+              {
+                "source_id": "r2.marketing",
+                "quote": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+              }
+            ]
+          },
+          {
+            "text": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。",
+            "nature": "assessment",
+            "evidence": [
+              {
+                "source_id": "r2.hesitant",
+                "quote": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。"
+              }
+            ]
+          },
+          {
+            "text": "[Mock 预设示例] 参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。 第 2 轮收到 4 条公开结果，保留本角色待核实点。",
+            "nature": "assessment",
+            "evidence": [
+              {
+                "source_id": "r2.complaints",
+                "quote": "[Mock 预设示例] 参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。 第 2 轮收到 4 条公开结果，保留本角色待核实点。"
+              }
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "text": "需协调获客、购买顾虑与服务承载的行动顺序；因果关系尚待验证。",
+            "nature": "assessment",
+            "evidence": [
+              {
+                "source_id": "r2.marketing",
+                "quote": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+              },
+              {
+                "source_id": "r2.hesitant",
+                "quote": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。"
+              },
+              {
+                "source_id": "r2.complaints",
+                "quote": "[Mock 预设示例] 参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。 第 2 轮收到 4 条公开结果，保留本角色待核实点。"
+              }
+            ]
+          }
+        ],
+        "conflicts": [
+          {
+            "text": "投放恢复速度与售后修复速度可能冲突",
+            "nature": "assessment",
+            "evidence": [
+              {
+                "source_id": "r2.marketing",
+                "quote": "投放恢复速度与售后修复速度可能冲突"
+              }
+            ]
+          },
+          {
+            "text": "新增曝光不一定优先于信任修复",
+            "nature": "assessment",
+            "evidence": [
+              {
+                "source_id": "r2.hesitant",
+                "quote": "新增曝光不一定优先于信任修复"
+              }
+            ]
+          },
+          {
+            "text": "追加投放与当前服务承载存在潜在冲突",
+            "nature": "assessment",
+            "evidence": [
+              {
+                "source_id": "r2.complaints",
+                "quote": "追加投放与当前服务承载存在潜在冲突"
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "text": "参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。",
+            "nature": "recommendation",
+            "evidence": [
+              {
+                "source_id": "r2.marketing",
+                "quote": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+              }
+            ],
+            "owner": "marketing",
+            "priority": "P2"
+          },
+          {
+            "text": "参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。",
+            "nature": "recommendation",
+            "evidence": [
+              {
+                "source_id": "r2.hesitant",
+                "quote": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。"
+              }
+            ],
+            "owner": "hesitant",
+            "priority": "P1"
+          },
+          {
+            "text": "参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。",
+            "nature": "recommendation",
+            "evidence": [
+              {
+                "source_id": "r2.complaints",
+                "quote": "[Mock 预设示例] 参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。 第 2 轮收到 4 条公开结果，保留本角色待核实点。"
+              }
+            ],
+            "owner": "complaints",
+            "priority": "P0"
+          }
+        ],
+        "verification": [
+          {
+            "text": "验证 marketing 的主要判断与建议是否适用于当前案例。",
+            "nature": "recommendation",
+            "evidence": [
+              {
+                "source_id": "r2.marketing",
+                "quote": "[Mock 预设示例] 参考购买顾虑与投诉约束，将方案明确为先统一售后口径和试写证据，再小范围测试投放。 第 2 轮收到 2 条公开结果，保留本角色待核实点。"
+              }
+            ]
+          },
+          {
+            "text": "验证 hesitant 的主要判断与建议是否适用于当前案例。",
+            "nature": "recommendation",
+            "evidence": [
+              {
+                "source_id": "r2.hesitant",
+                "quote": "[Mock 预设示例] 参考营销测试与投诉处理观点，将回访安排在统一证据和服务口径之后。 第 2 轮收到 3 条公开结果，保留本角色待核实点。"
+              }
+            ]
+          },
+          {
+            "text": "验证 complaints 的主要判断与建议是否适用于当前案例。",
+            "nature": "recommendation",
+            "evidence": [
+              {
+                "source_id": "r2.complaints",
+                "quote": "[Mock 预设示例] 参考推广与购买顾虑，增加向其他角色同步处理边界的动作，再评估服务承载。 第 2 轮收到 4 条公开结果，保留本角色待核实点。"
+              }
+            ]
+          }
+        ]
+      },
+      "collaboration": "aad",
+      "rounds": 2,
+      "consensus_claimed": false,
+      "source_steps": [
+        "r2.marketing",
+        "r2.hesitant",
+        "r2.complaints"
+      ]
+    }
+  },
+  "contexts": [
+    {
+      "step_id": "r1.marketing",
+      "round_no": 1,
+      "visible_senders": [],
+      "message_count": 2
+    },
+    {
+      "step_id": "r1.hesitant",
+      "round_no": 1,
+      "visible_senders": [],
+      "message_count": 2
+    },
+    {
+      "step_id": "r1.complaints",
+      "round_no": 1,
+      "visible_senders": [],
+      "message_count": 2
+    },
+    {
+      "step_id": "r2.marketing",
+      "round_no": 2,
+      "visible_senders": [
+        "hesitant",
+        "complaints"
+      ],
+      "message_count": 4
+    },
+    {
+      "step_id": "r2.hesitant",
+      "round_no": 2,
+      "visible_senders": [
+        "marketing",
+        "complaints",
+        "marketing"
+      ],
+      "message_count": 4
+    },
+    {
+      "step_id": "r2.complaints",
+      "round_no": 2,
+      "visible_senders": [
+        "marketing",
+        "hesitant",
+        "marketing",
+        "hesitant"
+      ],
+      "message_count": 4
+    }
+  ],
+  "model_calls": []
+}
