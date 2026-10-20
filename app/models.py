@@ -25,13 +25,13 @@ class TaskRequest(BaseModel):
     workflow: Literal["classic", "business"] = "classic"
     provider: Literal["mock", "deepseek"] = "mock"
     collaboration: Collaboration = "independent"
-    rounds: int = Field(default=2, ge=1, le=3)
+    rounds: int = Field(default=2, ge=1, le=10)
     aggregation: Literal["deterministic", "deepseek"] = "deterministic"
     routing: Literal["manual", "rule", "llm"] = "manual"
     graph_id: GraphId | None = None
     mode: Literal["parallel", "serial"] = "parallel"
     timeout_seconds: float = Field(default=5, ge=0.05, le=120)
-    max_retries: int = Field(default=1, ge=0, le=3)
+    max_retries: int = Field(default=1, ge=0, le=10)
     demo_fault: Literal["none", "once", "always", "timeout"] = "none"
     # 只传递外部指定的版本标识；协作层不根据讨论结果修改策略或 Prompt。
     strategy_versions: dict[str, str] = Field(default_factory=dict, max_length=32)

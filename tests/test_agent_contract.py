@@ -83,6 +83,18 @@ class ContractValidationTests(unittest.TestCase):
         self.assertTrue(response.compatibility_notes)
         self.assertIsNone(response.final_decision)
 
+    def test_invalid_discussion_has_safe_field_diagnostics(self):
+        request, _ = self.request()
+        raw = AgentResult(summary="虚构结论", data={"discussion": [
+            {"type": "revision", "content": "修改方案", "reason": "缺少数据", "do-not-leak-this-key": "secret"}]})
+        with self.assertRaises(ModelError) as caught:
+            normalize_response(raw, request, native=False)
+        diag = caught.exception.diagnostics
+        self.assertEqual(diag["validation_errors"][0]["type"], "extra_forbidden")
+        self.assertEqual(diag["validation_errors"][0]["field"], "discussion.0.other_field")
+        self.assertNotIn("do-not-leak-this-key", str(diag))
+        self.assertNotIn("secret", str(diag))
+
 
 class IntegrationTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):

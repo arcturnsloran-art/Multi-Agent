@@ -112,6 +112,18 @@ Agent 只声明 `type/content/target_agent_id/source_message_ids/reply_to/reason
 
 ## 运行与验证
 
+### 模型格式失败的诊断与有限重试
+
+`json_object` 保证的是 JSON 语法，不能替代 AgentResult 的业务字段校验；供应商也可能偶发返回空 content。当前提示词提供按轮次生成的 `output_example`，取消了与多组业务/讨论字段不相容的“总输出 500 字”要求。
+
+新的 `attempt_error` 保留 `error_code` 与安全的 `diagnostics.reason`：`empty_content`、`invalid_json`、`missing_fields`、`extra_fields`、`invalid_summary`、`invalid_data` 等；响应结构错误与截断另有分类。诊断不存原响应、未知字段名、密钥或底层异常文本，历史通用错误无法据此反推出当时的确切返回内容。
+
+重试继续由 Orchestrator 统一控制；格式失败的下一次输入包含 `format_feedback`，要求根据具体分类纠正结构。失败内容不进入私有会话，不发布为观点，也不作为其他 Agent 的输入。不通过宽松解析或丢弃未知字段绕过契约。
+
+业务 Agent 常规输出预算为 3200 tokens；截断重试时增加到固定上限 4800，并明确要求压缩重复表述、完整闭合 JSON。图选择与汇总仍使用各自预算，不引入无限增长的重试。
+
+网页切换到 DeepSeek 时默认设置最多重试 1 次（即最多 2 次调用），高级设置可改为 0–3 次；旧任务和明确指定的预算不变。认证失败仍不重试。格式示例和有限重试能减少失败，但不保证模型输出始终合规。
+
 启动方式保持不变：`.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000`。使用 DeepSeek 时，启动进程必须有正常外网访问权限；受限环境可能产生 Windows 10013 错误。
 
 网页选择 Mock → AAD → 两轮，执行默认虚构案例。展开“策略版本”可填写实验标识；执行后先点击“第 1 轮 / 第 2 轮”，再选 Agent，逐项查看其本轮输出。“执行依据与详细轨迹”内保留事件导出入口。

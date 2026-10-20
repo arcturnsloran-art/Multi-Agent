@@ -1,5 +1,6 @@
 """调用边界的薄适配层：旧 Agent 无需修改，新 Agent 实现 run_request 即可接入。"""
 from app.deepseek import ModelError
+from pydantic import ValidationError
 from app.models import AgentRequest, AgentResponse, AgentResult, CollaborationMessage, DiscussionItem
 
 
@@ -26,6 +27,16 @@ def normalize_response(raw, request: AgentRequest, *, native: bool) -> AgentResp
                 discussion=supplied, final_decision=result.data.get("final_decision"),
                 compatibility_notes=notes)
         response = response.model_copy(deep=True)
+    except ValidationError as exc:
+        # 只记录固定字段路径与错误类型，不记录 input/msg/ctx，以免回显模型或密钥原文。
+        allowed = {"request_id", "task_id", "agent_id", "strategy_version", "schema_version", "result",
+                   "summary", "data", "discussion", "type", "content", "reason", "target_agent_id",
+                   "source_message_ids", "reply_to", "final_decision", "proposed_strategy_version"}
+        errors = [{"field": ".".join(str(part) if isinstance(part, int) or part in allowed else "other_field"
+                                       for part in item["loc"]), "type": item["type"]}
+                  for item in exc.errors(include_input=False, include_url=False)[:6]]
+        raise ModelError("invalid_agent_response", "AgentResponse 或讨论内容不符合接口契约", retryable=True,
+                         diagnostics={"stage": "agent_response", "validation_errors": errors}) from None
     except (ValueError, TypeError):
         raise ModelError("invalid_agent_response", "AgentResponse 或讨论内容不符合接口契约", retryable=True) from None
     if (response.request_id != msg.id or response.task_id != msg.task_id

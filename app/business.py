@@ -8,7 +8,7 @@ from typing import Callable
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.deepseek import DeepSeekAdapter, JSON_CONTRACT, ModelError
-from app.models import AgentResult, Message
+from app.models import AgentResult, DiscussionItem, Message
 
 
 def validate_business_discussion(result: AgentResult, message: Message) -> None:
@@ -152,9 +152,20 @@ def prepare_user_message(message: Message, collaboration: str) -> dict[str, str]
         "其他来源也只能引用可见消息ID、previous_result_message_id 或 case（案例）。"
         "证据必须有来源；没有真实质疑则不编造。未指定对象或原因时填 null，来源为空时填 []。"
         "reply_to 为本次实际回应的公开讨论ID数组，只能从可见结果的 discussion 中摘取；没有则为空。"
+        "严格遵循 output_example 的字段层级，示例只说明结构，不能把示例文字当成业务结论。"
     )
+    # 同一信封适用于所有角色；按当前轮次提供正确的讨论类型，减少靠长文字猜格式。
+    example = {"summary": "本角色核心结论", "data": {
+        "analysis_basis": [], "findings": [], "recommendations": [], "validation_plan": [],
+        "dependencies": [], "disagreements": [], "revisions": [], "references": [],
+        "discussion": [{"type": "initial_view" if message.round_no == 1 else "revision",
+            "content": "本轮专业观点", "target_agent_id": None, "source_message_ids": [], "reply_to": [],
+            "reason": None if message.round_no == 1 else "修改或保留方案的实际原因"}],
+        "final_decision": "本角色本轮决策"}}
     return {"role": "user", "content": json.dumps({
         "instruction": instruction, "case": message.payload["prompt"],
+        "output_example": example, "format_feedback": message.payload.get("format_feedback"),
+        "discussion_item_schema": DiscussionItem.model_json_schema(),
         "requested_by": message.sender,
         "strategy_version": message.payload.get("strategy_version", "baseline"),
         "previous_result": message.payload.get("previous_result"),
@@ -307,7 +318,10 @@ class DeepSeekAgent:
                            session_id=self.session_id, correlation_id=message.id,
                            round_no=message.round_no, phase=message.phase,
                            messages=messages)
-            result, metadata = await self.adapter.complete(messages, max_tokens=2200)
+            # 完整业务闭环与讨论字段已超过早期短答规模；截断重试增加预算，但始终有固定上限。
+            feedback = message.payload.get("format_feedback") or {}
+            output_budget = 4800 if feedback.get("error_code") == "incomplete_output" else 3200
+            result, metadata = await self.adapter.complete(messages, max_tokens=output_budget)
             validate_references(result, message)
             validate_business_discussion(result, message)
             # 成功且通过数据契约校验后才提交会话；失败/取消不会留下半轮对话。

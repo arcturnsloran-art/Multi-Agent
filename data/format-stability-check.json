@@ -1,0 +1,70 @@
+{
+  "task_id": "9a53f2d294a147eab25c294b861174c8",
+  "status": "failed",
+  "steps": [
+    {
+      "id": "r1.marketing",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "id": "r1.hesitant",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "id": "r1.complaints",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "id": "r2.marketing",
+      "status": "succeeded",
+      "attempts": 1,
+      "error": null
+    },
+    {
+      "id": "r2.hesitant",
+      "status": "succeeded",
+      "attempts": 2,
+      "error": null
+    },
+    {
+      "id": "r2.complaints",
+      "status": "failed",
+      "attempts": 2,
+      "error": "ModelError: invalid_view_reference: Agent 引用了本轮不可见或不存在的观点"
+    }
+  ],
+  "format_errors": [
+    {
+      "step_id": "r2.hesitant",
+      "attempt": 1,
+      "error": "ModelError: invalid_output: 模型结果包含额外顶层字段，业务字段应放入 data",
+      "error_code": "invalid_output",
+      "diagnostics": {
+        "stage": "result_contract",
+        "reason": "extra_fields",
+        "extra_field_count": 1
+      }
+    },
+    {
+      "step_id": "r2.complaints",
+      "attempt": 1,
+      "error": "ModelError: invalid_view_reference: Agent 引用了本轮不可见或不存在的观点",
+      "error_code": "invalid_view_reference",
+      "diagnostics": {}
+    },
+    {
+      "step_id": "r2.complaints",
+      "attempt": 2,
+      "error": "ModelError: invalid_view_reference: Agent 引用了本轮不可见或不存在的观点",
+      "error_code": "invalid_view_reference",
+      "diagnostics": {}
+    }
+  ],
+  "model_responses": 5
+}

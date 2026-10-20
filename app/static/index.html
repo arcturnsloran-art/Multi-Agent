@@ -9,7 +9,7 @@
 <label>执行模式<select id="provider"><option value="mock">Mock · 本地预设结果</option><option value="deepseek">DeepSeek · 真实 API</option></select></label>
 <div id="routing-controls"></div>
 <label>协作模式<select id="collaboration"><option value="independent">Independent · 独立分析</option><option value="sequential_debate">Sequential Debate · 顺序辩论</option><option value="aad">AAD · 独立起草后辩论</option></select></label>
-<div class="field-row"><label>总轮数<input id="rounds" type="number" min="1" max="3" value="1" disabled></label><label>调用顺序<select id="mode"><option value="parallel">并行</option><option value="serial">依次独立调用</option></select></label></div>
+<div class="field-row"><label>总轮数<input id="rounds" type="number" min="1" max="10" value="1" disabled></label><label>调用顺序<select id="mode"><option value="parallel">并行</option><option value="serial">依次独立调用</option></select></label></div>
 <p id="protocol-note" class="hint">三者独立分析案例，不读取彼此答案。</p><p id="config-note" class="hint">读取本机配置状态…</p>
 <label for="prompt">任务案例</label><textarea id="prompt" rows="7" maxlength="4000" required>【纯虚构经营案例】星芽文具店销售39元笔记本礼盒，可用营销预算1000元。近四周访问量大致稳定，但投放点击率下降；犹豫客户反复询问透墨问题后未下单，存在流失风险。另有运输挤压投诉，客服处理口径尚未统一。团队希望恢复营销效果，但担心售后承载与购买信任。请共同制定协调经营策略，明确分歧、行动顺序和待验证事项。具体指标与因果关系未知，不得编造。</textarea>
 <div id="aggregation-controls"></div>

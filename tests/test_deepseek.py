@@ -71,6 +71,57 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ModelError):
                 await adapter.complete([])
 
+    async def test_format_diagnostics_distinguish_causes_without_leaking_content(self):
+        def returned(content):
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": content}}]})
+        cases = [
+            (returned(""), "empty_content"), (returned("   "), "empty_content"),
+            (returned(None), "empty_content"), (returned({"secret": FAKE_KEY}), "content_type"),
+            (returned(FAKE_KEY), "invalid_json"), (returned('[]'), "result_not_object"),
+            (returned(json.dumps({"data": {"secret": FAKE_KEY}})), "missing_fields"),
+            (returned(json.dumps({"summary": "ok", "data": {}, FAKE_KEY: "hidden"})), "extra_fields"),
+            (returned(json.dumps({"summary": " ", "data": {}})), "invalid_summary"),
+            (returned(json.dumps({"summary": "ok", "data": []})), "invalid_data"),
+            (httpx.Response(200, json={"choices": []}), "provider_shape"),
+            (httpx.Response(200, text=FAKE_KEY), "provider_not_json"),
+        ]
+        for outcome, reason in cases:
+            with self.subTest(reason=reason):
+                adapter = await self.adapter(lambda request: outcome)
+                with self.assertRaises(ModelError) as caught:
+                    await adapter.complete([])
+                self.assertEqual(caught.exception.code, "invalid_output")
+                self.assertEqual(caught.exception.diagnostics["reason"], reason)
+                self.assertNotIn(FAKE_KEY, str(caught.exception))
+                self.assertNotIn(FAKE_KEY, json.dumps(caught.exception.diagnostics))
+
+    async def test_current_format_example_is_complete_and_has_no_obsolete_length_limit(self):
+        from app.business import prepare_user_message
+        from app.deepseek import JSON_CONTRACT
+        from app.models import DiscussionItem
+        self.assertNotIn("500", JSON_CONTRACT)
+        for round_no, phase, kind in [(1, "draft", "initial_view"), (2, "debate", "revision")]:
+            msg = Message(task_id="t", step_id=f"r{round_no}.hesitant", sender="orchestrator",
+                          recipient="hesitant", kind="request", round_no=round_no, phase=phase,
+                          payload={"prompt": "虚构案例", "collaboration": "aad", "inputs": []})
+            content = json.loads(prepare_user_message(msg, "aad")["content"])
+            self.assertEqual(set(content["output_example"]), {"summary", "data"})
+            discussion = DiscussionItem.model_validate(content["output_example"]["data"]["discussion"][0])
+            self.assertEqual(discussion.type, kind)
+
+    async def test_truncation_retry_uses_bounded_larger_output_budget(self):
+        budgets = []
+        def handler(request):
+            budgets.append(json.loads(request.content)["max_tokens"])
+            return response()
+        adapter = await self.adapter(handler)
+        agent = DeepSeekAgent(ROLES[1], "budget-task", adapter)
+        for feedback in [None, {"error_code": "incomplete_output"}, {"error_code": "invalid_output"}]:
+            msg = Message(task_id="budget-task", step_id="hesitant", sender="orchestrator", recipient="hesitant",
+                          kind="request", payload={"prompt": "虚构预算测试", "inputs": [], "format_feedback": feedback})
+            await agent.run(msg)
+        self.assertEqual(budgets, [3200, 4800, 3200])
+
     async def test_network_errors_do_not_leak_headers(self):
         for error_type in [httpx.ConnectError, httpx.ReadTimeout]:
             def handler(request):
@@ -219,6 +270,35 @@ class BusinessApiTests(unittest.TestCase):
                 self.assertTrue(all(s["attempts"] == 1 for s in detail["task"]["steps"]))
                 self.assertEqual(len(calls), 3)
                 self.assertNotIn(FAKE_KEY, json.dumps(detail))
+
+    def test_format_retry_has_feedback_is_bounded_and_keeps_failed_output_out_of_history(self):
+        for retry_budget, expected in [(0, "failed"), (1, "succeeded")]:
+            requests = []
+            def handler(request):
+                messages = json.loads(request.content)["messages"]
+                requests.append(messages)
+                if len(requests) == 1:
+                    return response({"summary": "bad", "data": {}, FAKE_KEY: "not-to-be-logged"})
+                return response({"summary": "格式正确的虚构结果", "data": {"findings": ["需核实数据"]}})
+            with tempfile.TemporaryDirectory() as temp:
+                db_path = Path(temp) / "format.sqlite3"
+                with TestClient(create_app(str(db_path),
+                    settings_loader=lambda: Settings(api_key=SecretStr(FAKE_KEY)),
+                    transport=httpx.MockTransport(handler))) as client:
+                    task_id = client.post('/api/tasks', json={"prompt": "虚构格式验证案例", "workflow": "business",
+                        "provider": "deepseek", "graph_id": "single_hesitant", "max_retries": retry_budget}).json()["id"]
+                    detail = self.wait_terminal(client, task_id)
+                    self.assertEqual(detail["task"]["status"], expected)
+                    self.assertEqual(len(requests), retry_budget + 1)
+                    error = next(e["body"] for e in detail["events"] if e["kind"] == "attempt_error")
+                    self.assertEqual(error["diagnostics"]["reason"], "extra_fields")
+                    self.assertNotIn(FAKE_KEY, json.dumps(detail))
+                    if retry_budget:
+                        self.assertEqual(len(requests[1]), 2)
+                        feedback = json.loads(requests[1][-1]["content"])["format_feedback"]
+                        self.assertEqual(feedback["diagnostics"]["reason"], "extra_fields")
+                        self.assertNotIn(FAKE_KEY, json.dumps(requests[1]))
+                self.assertNotIn(FAKE_KEY.encode(), db_path.read_bytes())
 
     def test_transient_errors_retry_and_then_succeed(self):
         calls = 0

@@ -56,6 +56,7 @@ class Orchestrator:
         try:
             agent = self.routes[step.capability]
             step.agent_id = agent.id
+            format_feedback = None
             for attempt in range(1, task.request.max_retries + 2):
                 step.attempts = attempt
                 self.transition(task, step, "running", attempt=attempt)
@@ -64,6 +65,7 @@ class Orchestrator:
                                   recipient=agent.id, kind="request", round_no=step.round_no,
                                   phase=step.phase, payload={
                                       "prompt": task.request.prompt, "attempt": attempt,
+                                      "format_feedback": format_feedback,
                                       "collaboration": task.graph_selection.collaboration if task.graph_selection else task.request.collaboration,
                                       "inputs": [outputs[d].model_dump() for d in (
                                           step.context_from if step.context_from is not None else step.depends_on)]})
@@ -102,7 +104,15 @@ class Orchestrator:
                     return
                 except Exception as exc:
                     step.error = f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__
-                    self.store.save(task, "attempt_error", step_id=step.id, attempt=attempt, error=step.error)
+                    code = getattr(exc, "code", None)
+                    self.store.save(task, "attempt_error", step_id=step.id, attempt=attempt, error=step.error,
+                                    error_code=code, diagnostics=getattr(exc, "diagnostics", {}))
+                    # 沿用用户设定的重试预算；只回传安全的错误分类，不转发失败响应原文。
+                    if code in ("invalid_output", "invalid_agent_response", "missing_discussion", "incomplete_output"):
+                        format_feedback = {"error_code": code, "diagnostics": getattr(exc, "diagnostics", {}),
+                            "instruction": "上次输出未通过校验。重新作答并严格遵循 output_example：顶层仅 summary/data，业务和讨论字段放在 data 内。不要添加 Markdown。"}
+                        if code == "incomplete_output":
+                            format_feedback["instruction"] += "上次输出被截断，请减少重复表述，每项使用短句，保留必需字段并完整闭合 JSON。"
                     # 供应商认证/余额/参数错误重试没有意义；暂时错误沿用有限预算。
                     if attempt > task.request.max_retries or not getattr(exc, "retryable", True):
                         raise
