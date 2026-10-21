@@ -34,6 +34,11 @@ test('按轮次保留各种实际输出，嵌套业务字段展开为逐项文�
   assert.deepEqual(group('反馈意见'),['建议确认口径']);
   assert.deepEqual(group('本轮决策'),['先做对照验证']);
   assert.ok(!groups.flatMap(g=>g.items).some(s=>s.includes('[object Object]')));
+  const projected=projectRound(step,[]);
+  assert.ok(projected.coreGroups.some(g=>g.title==='本轮修订'));
+  assert.ok(projected.coreGroups.some(g=>g.title==='提出的质疑'));
+  assert.ok(!projected.coreGroups.some(g=>g.title==='分析发现'||g.title==='反馈意见'));
+  assert.ok(projected.detailGroups.some(g=>g.title==='分析发现'));
 });
 test('本轮收到的质疑严格取自本轮请求，不混入后来公开的质疑',()=>{
   const request={message:{step_id:'r2.marketing',payload:{inputs:[]}},collaboration_messages:[{type:'challenge',target_agent_id:'marketing',sender:'complaints',round_no:1,content:'已收到的问题'}]};

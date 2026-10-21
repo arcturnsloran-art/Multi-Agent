@@ -21,10 +21,10 @@
     const groups=[],seen=new Map();
     // 相同内容只列一次，但合并字段名，保留“初始观点/决策”等输出类型的区别。
     function add(title,items){const unique=[...new Set(items)].filter(Boolean);if(!unique.length)return;const signature=unique.map(s=>s.replace(/^\[Mock 预设示例\]\s*/, '').trim()).join('\n');const previous=seen.get(signature);if(previous){if(!previous.title.split(' / ').includes(title))previous.title+=' / '+title;return;}const group={title,items:unique};seen.set(signature,group);groups.push(group);}
-    const decision=response.final_decision||data.final_decision;
+    const decision=response.round_decision||response.final_decision||data.round_decision||data.final_decision;
     if(step.result?.summary)add('本轮结论',[step.result.summary]);
     for(const [key,value] of Object.entries(data)){
-      if(['discussion','final_decision','references','protocol_observation'].includes(key))continue;
+      if(['discussion','round_decision','final_decision','references','protocol_observation'].includes(key))continue;
       if(key==='revisions'&&discussions.some(d=>d.type==='revision'))continue;
       add(label(key),lines(value));
     }
@@ -42,7 +42,11 @@
       return [`${names[peer?.sender]||peer?.sender||'来源'}：${r.viewpoint||''}${r.quote?`；原观点：${r.quote}`:''}`];
     }));
     if(decision)add('本轮决策',[decision]);
-    return {groups,peers,version:response.strategy_version||request?.strategy_version||null,notes:response.compatibility_notes||[]};
+    // 首屏仅保留讨论主线，完整分析与引用仍可按条目展开，不丢失历史字段。
+    const coreTitles=['本轮结论','初始观点','提出的质疑','本轮收到的质疑','本轮修订','方案变化','本轮决策'];
+    const coreGroups=groups.filter(g=>g.title.split(' / ').some(t=>coreTitles.includes(t)&&!(t==='初始观点'&&step.result?.summary)));
+    const detailGroups=groups.filter(g=>!coreGroups.includes(g));
+    return {groups,coreGroups,detailGroups,peers,version:response.strategy_version||request?.strategy_version||null,notes:response.compatibility_notes||[]};
   }
   function draw(task,events,helpers){
     const {el,badge,raw,preserve}=helpers,container=document.getElementById('round-view');
@@ -65,7 +69,9 @@
         const status={pending:'等待',running:'执行中',retrying:'重试中',succeeded:'已完成',failed:'失败',skipped:'已跳过'};
         header.append(el('h3',names[step.capability]||step.agent_id||step.capability),badge(status[step.status]||step.status,step.status));card.append(header);
         if(!step.result)card.append(el('p',step.error||(step.status==='skipped'?'上游失败，本轮未执行。':'等待本轮输出…'),step.error?'error':'hint'));
-        for(const group of projected.groups){const row=el('section','','output-row'),list=el('ol');row.append(el('h4',group.title));for(const item of group.items)list.append(el('li',item));row.append(list);card.append(row);}
+        function appendGroups(parent,groups,core=false){for(const group of groups){const row=el('section','','output-row'),list=el('ol');const titles=core?[...new Set(group.title.split(' / ').map(t=>({'本轮结论':'核心观点','初始观点':'核心观点','本轮修订':'修订变化','本轮决策':'阶段方案'}[t]||t)))].join(' / '):group.title;row.append(el('h4',titles));for(const item of group.items)list.append(el('li',item));row.append(list);parent.append(row);}}
+        appendGroups(card,projected.coreGroups,true);
+        if(projected.detailGroups.length){const extra=el('details','','raw-details');extra.dataset.key=step.id+':extra';extra.append(el('summary','补充分析与引用依据 · '+projected.detailGroups.length+' 类'));appendGroups(extra,projected.detailGroups);card.append(extra);}
         const details=el('details','','raw-details');details.dataset.key=step.id+':technical';details.append(el('summary','上下文、版本与原始记录'));
         details.append(el('p',`调用尝试 ${step.attempts} 次${projected.version?' · 策略标识 '+projected.version:''}`,'hint'));
         if(projected.peers.length){const ul=el('ul');for(const p of projected.peers)ul.append(el('li',`${names[p.sender]||p.sender} · 第 ${p.round_no||1} 轮：${p.payload.summary}`));details.append(el('h4','本轮实际收到的上下文'),ul);}else details.append(el('p','本轮没有其他 Agent 的公开输入。','hint'));

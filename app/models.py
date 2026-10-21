@@ -92,6 +92,8 @@ class Message(BaseModel):
     correlation_id: str | None = None
     created_at: str = Field(default_factory=now)
     discussion: list["CollaborationMessage"] = Field(default_factory=list)
+    # 观点 ID 与传输消息 ID 分离；旧消息没有此字段时由后端确定性补算。
+    view_id: str | None = None
 
 
 class AgentResult(BaseModel):
@@ -133,6 +135,16 @@ class CollaborationMessage(DiscussionItem):
     created_at: str = Field(default_factory=now)
 
 
+class VisibleView(BaseModel):
+    """只来自当前 context_from 的成功结果，供 Agent 选择引用，不是全局观点索引。"""
+    view_id: str
+    message_id: str
+    sender: str
+    step_id: str
+    round_no: int
+    content: str
+
+
 class AgentRequest(BaseModel):
     """新接入团队的输入契约：复用原消息信封，只附加受控上下文。"""
     model_config = ConfigDict(extra="forbid")
@@ -142,6 +154,7 @@ class AgentRequest(BaseModel):
     previous_result: AgentResult | None = None
     previous_result_message_id: str | None = None
     collaboration_messages: list[CollaborationMessage] = Field(default_factory=list)
+    visible_views: list[VisibleView] = Field(default_factory=list)
 
 
 class AgentResponse(BaseModel):
@@ -154,6 +167,8 @@ class AgentResponse(BaseModel):
     strategy_version: str
     result: AgentResult
     discussion: list[DiscussionItem] = Field(default_factory=list, max_length=24)
+    round_decision: str | None = Field(default=None, max_length=2000)
+    # 兼容旧团队接口；此字段也只代表本角色阶段方案，不能当作任务最终报告。
     final_decision: str | None = Field(default=None, max_length=2000)
     proposed_strategy_version: str | None = Field(default=None, min_length=1, max_length=100)
     # 旧接口没有提供的字段不得被包装层冒充成真实修订原因。
@@ -183,6 +198,8 @@ class TaskRecord(BaseModel):
     steps: list[Step] = Field(default_factory=list)
     result: AgentResult | None = None
     error: str | None = None
+    execution_phase: Literal["pending", "discussion", "aggregation", "completed", "failed"] = "pending"
+    termination_reason: str | None = None
     created_at: str = Field(default_factory=now)
     graph_selection: "GraphSelection | None" = None
 

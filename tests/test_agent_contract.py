@@ -128,6 +128,17 @@ class IntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event["strategy_versions"]["marketing"], "junior-v1")
         self.assertEqual(event["evaluation"], "not_evaluated")
 
+    async def test_native_agent_cannot_bypass_view_reference_validation(self):
+        class BadReferenceAgent(TeamAgent):
+            async def run_request(self, request):
+                response=await super().run_request(request)
+                response.result.data["references"]=[{"view_id":"invented", "relation":"agree"}]
+                return response
+        task=await self.run_case([BadReferenceAgent(role) for role in ROLES])
+        self.assertEqual(task.status,"failed")
+        self.assertTrue(all(s.status=="failed" for s in task.steps if s.round_no==1))
+        self.assertFalse(any(e["kind"]=="collaboration_message" for e in self.store.events(task.id)))
+
     async def test_aad_keeps_initial_views_and_links_received_challenges_to_revisions(self):
         task = await self.run_case()
         self.assertEqual(task.status, "succeeded")

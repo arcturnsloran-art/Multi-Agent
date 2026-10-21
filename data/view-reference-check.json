@@ -1,0 +1,59 @@
+{
+  "task_id": "76b4fbb76d0e4f5ea4db2733adc41174",
+  "status": "succeeded",
+  "protocol": "aad",
+  "rounds": 2,
+  "provider": "deepseek",
+  "model_calls": 6,
+  "retry_errors": 0,
+  "reference_count": 7,
+  "catalogs_match_actual_inputs": true,
+  "model_catalogs_match_backend": true,
+  "references_all_visible": true,
+  "python_tests": 77,
+  "frontend_tests": 8,
+  "steps": [
+    {
+      "step_id": "r1.marketing",
+      "status": "succeeded",
+      "visible_views": 0,
+      "references": 0,
+      "attempts": 1
+    },
+    {
+      "step_id": "r1.hesitant",
+      "status": "succeeded",
+      "visible_views": 0,
+      "references": 0,
+      "attempts": 1
+    },
+    {
+      "step_id": "r1.complaints",
+      "status": "succeeded",
+      "visible_views": 0,
+      "references": 0,
+      "attempts": 1
+    },
+    {
+      "step_id": "r2.marketing",
+      "status": "succeeded",
+      "visible_views": 2,
+      "references": 2,
+      "attempts": 1
+    },
+    {
+      "step_id": "r2.hesitant",
+      "status": "succeeded",
+      "visible_views": 3,
+      "references": 3,
+      "attempts": 1
+    },
+    {
+      "step_id": "r2.complaints",
+      "status": "succeeded",
+      "visible_views": 4,
+      "references": 2,
+      "attempts": 1
+    }
+  ]
+}

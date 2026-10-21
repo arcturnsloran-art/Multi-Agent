@@ -132,7 +132,8 @@ class ProtocolTests(unittest.IsolatedAsyncioTestCase):
 class ProtocolValidationTests(unittest.TestCase):
     def test_invalid_settings(self):
         for values in [{"collaboration": "unknown"}, {"collaboration": "aad", "rounds": 1},
-                       {"collaboration": "aad", "rounds": 4},
+                       # 当前项目已把总轮数上限调整到 10；继续测试真实的越界值。
+                       {"collaboration": "aad", "rounds": 11},
                        {"collaboration": "aad", "mode": "serial"}]:
             with self.assertRaises(ValidationError):
                 TaskRequest(prompt="虚构", workflow="business", **values)

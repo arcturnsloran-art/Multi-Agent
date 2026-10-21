@@ -391,8 +391,13 @@ py -m venv .venv
 
 统一输入输出、五种讨论消息、策略版本与进化事件的完整说明见 [协作接口说明](docs/collaboration-contracts.md)。
 本阶段沿用现有协作图、状态机和 SQLite 表；增加 `agent_contract.py` 兼容层与按 Agent 展示的讨论视图。
-刷新网页，选择 Mock / AAD / 两轮，即可观察初稿、实际收到的质疑、修订原因与最终决策。
+刷新网页，选择 Mock / AAD / 两轮，即可观察初稿、实际收到的质疑、修订原因与阶段方案；讨论结束后另行生成最终报告。
 高级设置可填写策略版本标识；本地 Demo 只传递标识，不加载外部策略、不训练、不自动修改 Prompt。
+
+新增：固定轮次结束后显式进入聚合阶段。网页切换 DeepSeek 时默认选择 DeepSeek 策略聚合，完成后展开最终报告；API 调用需显式设置 `aggregation=deepseek`，原默认值保留。报告包含核心结论、关键发现、分歧、行动建议和待验证事项，不把固定轮次结束等同于达成共识。引用与报告证据仍严格校验，有限重试耗尽则明确失败。
+
+②组 Agent 接入与④组轨迹/进化读取的接口表，以及完整入口调用路径，见 [协作接口说明](docs/collaboration-contracts.md)。
+可手动运行 `python tests/live_finalization_check.py` 验证真实三轮 AAD 与模型聚合（需服务已启动、已配置 `.env`，会调用 DeepSeek）；安全的结果摘要写入 `data/finalization-check.json`。
 
 ## 接入其他团队 Agent
 

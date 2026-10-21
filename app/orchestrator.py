@@ -3,7 +3,8 @@ import asyncio
 
 from app.agents import Agent, RequestAgent
 from app.agent_contract import call_agent, publish_discussion
-from app.business import ROLES, aggregate_business
+from app.business import ROLES, aggregate_business, validate_references
+from app.references import stable_view_id, visible_views
 from app.models import AgentRequest, CollaborationMessage, Message, Step, TaskRecord
 from app.graph_selector import GraphSelector, RuleGraphSelector, manual_graph, resolve_graph, validate_plan
 from app.store import Store
@@ -54,6 +55,8 @@ class Orchestrator:
     async def execute_step(self, task: TaskRecord, step: Step, outputs: dict[str, Message]):
         """单步骤拥有独立重试预算。只有成功结果才会成为下游输入。"""
         try:
+            if step.phase == "aggregation":
+                self.begin_aggregation(task)
             agent = self.routes[step.capability]
             step.agent_id = agent.id
             format_feedback = None
@@ -66,9 +69,15 @@ class Orchestrator:
                                   phase=step.phase, payload={
                                       "prompt": task.request.prompt, "attempt": attempt,
                                       "format_feedback": format_feedback,
+                                      "context_from": step.context_from if step.context_from is not None else step.depends_on,
                                       "collaboration": task.graph_selection.collaboration if task.graph_selection else task.request.collaboration,
                                       "inputs": [outputs[d].model_dump() for d in (
                                           step.context_from if step.context_from is not None else step.depends_on)]})
+                if step.phase == "aggregation":
+                    # 聚合者可审阅已完成的公开讨论，避免只看末轮摘要而遗漏早前未解决的质疑。
+                    # 业务 Agent 的 context_from 白名单保持不变，不把聚合权限反向授予讨论节点。
+                    message.payload["discussion_history"] = [d.model_dump()
+                        for output in outputs.values() for d in output.discussion]
                 previous = [m for m in outputs.values() if m.sender == agent.id and m.round_no < step.round_no]
                 prior = max(previous, key=lambda m: m.round_no) if previous else None
                 request = AgentRequest(message=message,
@@ -76,7 +85,9 @@ class Orchestrator:
                     previous_result=prior.payload if prior else None,
                     previous_result_message_id=prior.id if prior else None,
                     collaboration_messages=[CollaborationMessage.model_validate(item)
-                        for peer in message.payload["inputs"] for item in peer.get("discussion", [])])
+                        for peer in message.payload["inputs"] for item in peer.get("discussion", [])],
+                    visible_views=visible_views(message) if task.request.workflow == "business" else [])
+                message.payload["visible_views"] = [v.model_dump() for v in request.visible_views]
                 # 版本只是接入方的输入；本地旧 Agent 不会据此自动更换 Prompt。
                 message.payload["strategy_version"] = request.strategy_version
                 message.payload["previous_result"] = request.previous_result.model_dump() if request.previous_result else None
@@ -87,10 +98,14 @@ class Orchestrator:
                     response = await asyncio.wait_for(self.invoke(task, step, agent, request),
                                                     timeout=task.request.timeout_seconds)
                     result = response.result
+                    if task.request.workflow == "business":
+                        # 第三方新接口也经过相同的引用校验，不能仅依赖内置 DeepSeek Agent 自查。
+                        validate_references(result, message)
                     reply = Message(task_id=task.id, step_id=step.id, sender=agent.id,
                                     recipient="orchestrator", kind="result",
                                     round_no=step.round_no, phase=step.phase,
-                                    payload=result.model_dump(), correlation_id=message.id)
+                                    payload=result.model_dump(), correlation_id=message.id,
+                                    view_id=stable_view_id(task.id, step.id))
                     discussion = publish_discussion(response, request, reply.id)
                     # 公开讨论附在对应成功结果上，下一轮仍只从 context_from 白名单取上下文。
                     reply.discussion = discussion
@@ -108,11 +123,23 @@ class Orchestrator:
                     self.store.save(task, "attempt_error", step_id=step.id, attempt=attempt, error=step.error,
                                     error_code=code, diagnostics=getattr(exc, "diagnostics", {}))
                     # 沿用用户设定的重试预算；只回传安全的错误分类，不转发失败响应原文。
-                    if code in ("invalid_output", "invalid_agent_response", "missing_discussion", "incomplete_output"):
+                    if code in ("invalid_output", "invalid_agent_response", "missing_discussion", "incomplete_output",
+                                "invalid_view_reference", "invisible_discussion_source", "invisible_discussion_reply",
+                                "missing_challenge_source", "invalid_discussion_target", "invalid_strategy_report",
+                                "invalid_evidence", "unsupported_number", "missing_source", "invalid_owner", "unsafe_summary"):
                         format_feedback = {"error_code": code, "diagnostics": getattr(exc, "diagnostics", {}),
                             "instruction": "上次输出未通过校验。重新作答并严格遵循 output_example：顶层仅 summary/data，业务和讨论字段放在 data 内。不要添加 Markdown。"}
                         if code == "incomplete_output":
                             format_feedback["instruction"] += "上次输出被截断，请减少重复表述，每项使用短句，保留必需字段并完整闭合 JSON。"
+                        elif code == "invalid_view_reference":
+                            format_feedback["instruction"] = (
+                                "上次引用非法，见 diagnostics.reason 和 reference_index。仅从本次 visible_views 选择 view_id；"
+                                "不要填 message_id/quote，不沿用历史不可见ID。无需引用时 references=[]；不得编造或自动扩大目录。")
+                        elif step.phase == "aggregation":
+                            format_feedback["instruction"] = (
+                                "上次聚合报告未通过校验，错误见 error_code。仅重写 summary 和 data.report；"
+                                "具体位置见 diagnostics。evidence 仅填写 source_id，不要生成 quote，由后端补齐原文。"
+                                "source_id 逐字取 sources 的键，不能用角色名代替。覆盖所有角色，不新增事实或数字。")
                     # 供应商认证/余额/参数错误重试没有意义；暂时错误沿用有限预算。
                     if attempt > task.request.max_retries or not getattr(exc, "retryable", True):
                         raise
@@ -132,8 +159,20 @@ class Orchestrator:
                 await asyncio.sleep(task.request.timeout_seconds + 1)
         return await call_agent(agent, request)
 
+    def begin_aggregation(self, task: TaskRecord):
+        """固定计划执行完毕才聚合；分歧不会增加轮次，也不等于已经达成共识。"""
+        if task.execution_phase == "aggregation":
+            return
+        business_steps = [s for s in task.steps if s.phase != "aggregation"]
+        if not business_steps or any(s.status != "succeeded" for s in business_steps):
+            raise RuntimeError("讨论步骤尚未全部成功，禁止生成完整最终报告")
+        task.execution_phase = "aggregation"
+        task.termination_reason = "round_limit" if max(s.round_no for s in business_steps) > 1 else "single_pass"
+        self.store.save(task, "aggregation_started", termination_reason=task.termination_reason,
+                        completed_rounds=max(s.round_no for s in business_steps))
+
     async def run(self, task: TaskRecord):
-        """每轮选择依赖全部成功的步骤，并行执行后等待整轮结束。"""
+        """执行有限显式计划；只生成一次最终报告，不根据模型文字循环追加讨论。"""
         outputs: dict[str, Message] = {}
         try:
             if set(task.request.strategy_versions) - {a.id for a in self.agents}:
@@ -190,6 +229,8 @@ class Orchestrator:
                             steps=[s.model_dump() for s in task.steps])
             if task.status != "running":
                 self.transition(task, task, "running")
+            task.execution_phase = "discussion"
+            self.store.save(task, "discussion_started")
             while any(s.status == "pending" for s in task.steps):
                 states = {s.id: s.status for s in task.steps}
                 for step in task.steps:
@@ -209,15 +250,21 @@ class Orchestrator:
                 await asyncio.gather(*(self.execute_step(task, s, outputs) for s in ready))
             if any(s.status == "failed" for s in task.steps):
                 task.error = "一个或多个步骤失败，未生成最终结果"
+                task.execution_phase, task.termination_reason = "failed", "execution_failed"
                 self.transition(task, task, "failed", error=task.error)
             else:
                 if task.request.workflow == "business":
+                    # 本地汇总也显式进入聚合阶段，保持旧步骤数量与依赖图兼容。
+                    self.begin_aggregation(task)
                     task.result = (task.steps[-1].result if task.request.aggregation == "deepseek"
                                    else aggregate_business(task.steps, protocol))
+                    task.result.data["termination_reason"] = task.termination_reason
+                    task.result.data["completed_rounds"] = rounds
                     self.store.save(task, "results_aggregated", method=task.request.aggregation,
                                     collaboration=protocol, sources=task.result.data.get("source_steps",[]))
                 else:
                     task.result = task.steps[-1].result
+                task.execution_phase = "completed"
                 self.transition(task, task, "succeeded")
         except asyncio.CancelledError:
             self.abort(task, "执行被取消（例如服务关闭）")
@@ -234,4 +281,5 @@ class Orchestrator:
             elif step.status == "pending":
                 self.transition(task, step, "skipped", reason=reason)
         task.error = reason
+        task.execution_phase, task.termination_reason = "failed", "execution_failed"
         self.transition(task, task, "failed", error=reason)

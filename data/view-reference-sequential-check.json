@@ -1,0 +1,57 @@
+{
+  "task_id": "027a1385ebd24f29b20e42ab4c6d7a65",
+  "status": "succeeded",
+  "protocol": "sequential_debate",
+  "model_calls": 7,
+  "reference_count": 9,
+  "catalogs_match_actual_inputs": true,
+  "model_catalogs_match_backend": true,
+  "references_all_visible": true,
+  "errors": [
+    {
+      "step_id": "r1.complaints",
+      "attempt": 1,
+      "error": "ModelError: missing_discussion: 首轮需记录初始观点，后续轮需记录修订或保留原因",
+      "error_code": "missing_discussion",
+      "diagnostics": {}
+    }
+  ],
+  "steps": [
+    {
+      "step_id": "r1.marketing",
+      "visible_views": 0,
+      "references": 0,
+      "attempts": 1
+    },
+    {
+      "step_id": "r1.hesitant",
+      "visible_views": 1,
+      "references": 1,
+      "attempts": 1
+    },
+    {
+      "step_id": "r1.complaints",
+      "visible_views": 2,
+      "references": 2,
+      "attempts": 2
+    },
+    {
+      "step_id": "r2.marketing",
+      "visible_views": 2,
+      "references": 2,
+      "attempts": 1
+    },
+    {
+      "step_id": "r2.hesitant",
+      "visible_views": 3,
+      "references": 2,
+      "attempts": 1
+    },
+    {
+      "step_id": "r2.complaints",
+      "visible_views": 4,
+      "references": 2,
+      "attempts": 1
+    }
+  ]
+}

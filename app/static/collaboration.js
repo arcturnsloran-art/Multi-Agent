@@ -12,7 +12,7 @@
           receivedRounds:requests.filter(r=>r.message.recipient===id&&r.collaboration_messages.some(x=>x.id===m.id)).map(r=>r.message.round_no)})),
         revisions:done.flatMap(s=>(s.response?.discussion||[]).filter(d=>d.type==='revision').map(d=>({...d,round_no:s.round_no,
           replies:messages.filter(m=>(d.reply_to||[]).includes(m.id))}))),
-        finalDecision:last?.response?.final_decision||null,lastPlan:last?.result?.summary||'尚无成功结果',
+        finalDecision:last?.response?.round_decision||last?.response?.final_decision||null,lastPlan:last?.result?.summary||'尚无成功结果',
         complete:task.status==='succeeded',notes:[...new Set(done.flatMap(s=>s.response?.compatibility_notes||[]))]};
     });
   }

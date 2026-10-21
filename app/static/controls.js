@@ -4,13 +4,14 @@
  const aggregation=makeSelect('aggregation','结果整合方式',[['deterministic','本地有来源模板报告'],['deepseek','DeepSeek · 统一策略整合']],'aggregation-controls');
  const routing=makeSelect('routing','协作图路由',[['manual','手动固定 · 对照实验'],['rule','RuleGraphSelector · 规则选择'],['llm','LLMGraphSelector · DeepSeek 选择']],'routing-controls');
  const graph=makeSelect('graph-id','固定模式',[['protocol','使用下方 Independent / Debate / AAD'],['single_marketing','仅营销 Agent'],['single_hesitant','仅摇摆户 Agent'],['single_complaints','仅客户投诉 Agent']],'routing-controls');
+ let previousEnabled=false;
  const roleNames={marketing:'营销',hesitant:'摇摆户',complaints:'投诉'};let graphNames={};
  window.workbench.api('/api/graphs').then(rows=>{graphNames=Object.fromEntries(rows.map(g=>[g.id,g.name]));}).catch(()=>{});
  function routingChanged(){const classic=$('workflow').value==='classic',manual=routing.value==='manual',single=manual&&graph.value!=='protocol';graph.disabled=classic||!manual;$('collaboration').disabled=classic||!manual||single;
   if(!manual){$('rounds').disabled=false;$('rounds').min='2';if(Number($('rounds').value)<2)$('rounds').value='2';$('mode').value='parallel';$('mode').disabled=true;$('protocol-note').textContent='自动路由将根据任务与注册能力选择图；下面总轮数用于辩论图，单 Agent 和并行图只运行一轮。';}
   else {if(single)$('collaboration').value='independent';window.workbench.protocolChanged();if(single){$('mode').value='parallel';$('mode').disabled=true;}}
  }
- function providerChanged(){const enabled=$('provider').value==='deepseek'&&$('workflow').value==='business';aggregation.querySelector('[value="deepseek"]').disabled=!enabled;aggregation.disabled=$('workflow').value!=='business';if(!enabled)aggregation.value='deterministic';routing.disabled=$('workflow').value!=='business';routing.querySelector('[value="llm"]').disabled=!enabled;if(!enabled&&routing.value==='llm')routing.value='rule';if($('workflow').value==='classic'){routing.value='manual';graph.value='protocol';}routingChanged();}
+ function providerChanged(){const enabled=$('provider').value==='deepseek'&&$('workflow').value==='business';if(enabled&&!previousEnabled)aggregation.value='deepseek';previousEnabled=enabled;aggregation.querySelector('[value="deepseek"]').disabled=!enabled;aggregation.disabled=$('workflow').value!=='business';if(!enabled)aggregation.value='deterministic';routing.disabled=$('workflow').value!=='business';routing.querySelector('[value="llm"]').disabled=!enabled;if(!enabled&&routing.value==='llm')routing.value='rule';if($('workflow').value==='classic'){routing.value='manual';graph.value='protocol';}routingChanged();}
  routing.onchange=routingChanged;graph.onchange=routingChanged;
  window.workbenchExtension={providerChanged,workflowChanged:providerChanged,
   request:()=>({aggregation:aggregation.value,routing:routing.value,graph_id:routing.value==='manual'&&graph.value!=='protocol'?graph.value:null,...(routing.value!=='manual'?{collaboration:'independent',mode:'parallel'}:{})}),

@@ -24,14 +24,15 @@ def normalize_response(raw, request: AgentRequest, *, native: bool) -> AgentResp
             response = AgentResponse(
                 request_id=msg.id, task_id=msg.task_id, agent_id=msg.recipient,
                 strategy_version=request.strategy_version, result=result,
-                discussion=supplied, final_decision=result.data.get("final_decision"),
+                discussion=supplied, round_decision=result.data.get("round_decision") or result.data.get("final_decision"),
+                final_decision=result.data.get("final_decision"),
                 compatibility_notes=notes)
         response = response.model_copy(deep=True)
     except ValidationError as exc:
         # 只记录固定字段路径与错误类型，不记录 input/msg/ctx，以免回显模型或密钥原文。
         allowed = {"request_id", "task_id", "agent_id", "strategy_version", "schema_version", "result",
                    "summary", "data", "discussion", "type", "content", "reason", "target_agent_id",
-                   "source_message_ids", "reply_to", "final_decision", "proposed_strategy_version"}
+                   "source_message_ids", "reply_to", "round_decision", "final_decision", "proposed_strategy_version"}
         errors = [{"field": ".".join(str(part) if isinstance(part, int) or part in allowed else "other_field"
                                        for part in item["loc"]), "type": item["type"]}
                   for item in exc.errors(include_input=False, include_url=False)[:6]]
@@ -49,6 +50,10 @@ def validate_discussion(response: AgentResponse, request: AgentRequest) -> None:
     """检查来源确实可见、质疑确实有对象；模型观点的真实性仍需外部评估。"""
     msg = request.message
     visible = {m["id"]: m for m in msg.payload.get("inputs", [])}
+    # source_message_ids 保留旧接口名，同时接受后端观点 ID；两种 ID 必须落到同一可见来源。
+    for view in request.visible_views:
+        if view.message_id in visible:
+            visible[view.view_id] = visible[view.message_id]
     valid_sources = set(visible) | {"case"}
     if request.previous_result_message_id:
         valid_sources.add(request.previous_result_message_id)
@@ -81,9 +86,10 @@ def publish_discussion(response: AgentResponse, request: AgentRequest, result_id
     """只有通过验证的成功返回值才发布；失败重试不会产生可供其他 Agent 消费的观点。"""
     validate_discussion(response, request)
     msg = request.message
-    return [CollaborationMessage(**item.model_dump(), task_id=msg.task_id, step_id=msg.step_id,
+    return [CollaborationMessage(**item.model_dump(), id=f"discussion:{msg.task_id}:{msg.step_id}:{index}",
+                task_id=msg.task_id, step_id=msg.step_id,
                 sender=msg.recipient, round_no=msg.round_no, result_message_id=result_id,
-                strategy_version=request.strategy_version) for item in response.discussion]
+                strategy_version=request.strategy_version) for index, item in enumerate(response.discussion)]
 
 
 async def call_agent(agent, request: AgentRequest) -> AgentResponse:

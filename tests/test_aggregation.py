@@ -20,6 +20,7 @@ def fake_report(sources, owners):
     ids = [key for key in sources if key != "case"]
     evidence = lambda key: [{"source_id":key, "quote":sources[key][:20]}]
     return {"core_issues":[{"text":"专业观点仍需核验", "nature":"assessment", "evidence":evidence(key)} for key in ids],
+        "key_findings":[{"text":"专业判断尚待验证", "nature":"assessment", "evidence":evidence(ids[0])}],
         "connections":[], "conflicts":[], "actions":[{"text":"先核验约束再开展行动", "nature":"recommendation",
         "owner":owners[0], "priority":"P0", "evidence":evidence(ids[0])}],
         "verification":[{"text":"验证判断与案例是否一致", "nature":"recommendation", "evidence":evidence(ids[0])}]}
@@ -32,6 +33,21 @@ class EvidenceTests(unittest.TestCase):
 
     def test_valid_evidence_and_coverage(self):
         validate_report(StrategyReport.model_validate(self.value), self.sources, {"marketing", "complaints"})
+
+    def test_source_id_only_gets_backend_quote_and_invalid_source_keeps_diagnostics(self):
+        report = StrategyReport.model_validate(self.value)
+        for section in (report.core_issues, report.actions, report.verification):
+            for item in section:
+                for evidence in item.evidence:
+                    evidence.quote = None
+        validate_report(report, self.sources, {"marketing", "complaints"})
+        self.assertEqual(report.core_issues[0].evidence[0].quote, self.sources["marketing"])
+        report.core_issues[0].evidence[0].source_id = "r99.fake"
+        with self.assertRaises(ModelError) as caught:
+            validate_report(report, self.sources, {"marketing", "complaints"})
+        self.assertEqual(caught.exception.diagnostics["reason"], "unknown_source")
+        self.assertEqual(caught.exception.diagnostics["section"], "core_issues")
+        self.assertEqual(caught.exception.diagnostics["allowed_source_ids"], list(self.sources))
 
     def test_invented_quote_and_new_number_rejected(self):
         for field,value in [("quote","不存在的原文"), ("source_id","not_registered")]:

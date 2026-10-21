@@ -1,5 +1,38 @@
 # 协作接口与进化事件（1.0）
 
+## ②组、协作层与④组的对接边界
+
+这里按②组负责专业 Agent、④组负责评估与进化模块划分职责。现有接口不实现记忆优化、训练或 Prompt 自动进化。
+
+| 接口 / 模块 | 负责什么 | 谁需要对接 |
+| --- | --- | --- |
+| `RequestAgent.run_request(AgentRequest) -> AgentResponse` | 每次调用的输入/输出契约；异步执行，支持取消。身份、请求 ID、版本必须回显 | ②组主要入口。在 `main.create_task()` 注册同能力实现，目前不是网络注册服务 |
+| `AgentRequest.visible_views` | 本次允许引用的观点白名单；历史见过不代表本次可见 | ②组只能从此选择 `view_id`；不自行生成观点 ID |
+| `DiscussionItem` / `CollaborationMessage` | ②组声明观点、质疑、证据、修订原因和反馈；协作层生成身份和讨论 ID，并验证回应对象 | ②组输出前者；④组读取后者分析互动与修订 |
+| `AgentResponse.round_decision` | 当前角色的阶段方案；不是整项任务最终版本 | ②组新实现建议使用；旧 `final_decision` 字段继续接受，含义同样是阶段方案 |
+| `strategy_version` / `proposed_strategy_version` | 本任务输入版本与可选候选版本标识，不加载或自动切换策略 | ②组解析自身版本；④组读取及管理候选产物，下一任务显式传入新版本 |
+| `Orchestrator` / `GraphSelector` / `Message` / `Step` | 有限计划、受控消息传递、引用验证、状态、超时、重试、最终聚合 | 协作机制层维护；②组不能通过输出扩大通信范围 |
+| `StrategyReport` / `TaskRecord.result` | 核心结论、关键发现、跨域关联、分歧、行动及待验证事项；保留来源与原始结果 | ④组读取最终报告；引用有效不代表业务判断正确 |
+| `EvolutionEvent` | 终态快照、轨迹边界、版本元数据；`evaluation=not_evaluated` | ④组消费，并自行评价效果；不能据讨论结束宣称 Agent 能力提升 |
+| `GET /api/contracts` | JSON Schema 契约发现 | ②组、④组均可读取 |
+| `POST /api/tasks`、`GET /api/tasks/{id}` | 提交实验与查询任务、步骤、事件 | ②组联调、④组对照实验 |
+| `GET /api/evolution-events?after_seq=...` | 按游标增量拉取终态事件；按事件 ID 去重 | ④组主要读取入口，自行持久化 `next_cursor` |
+| `GET /api/tasks/{id}/evolution` | 完整执行轨迹和终态事件，用于离线评估 | ④组读取；不用于自动扩大下一轮模型上下文 |
+
+## 固定轮次结束与最终报告
+
+调用路径：`main.create_task → Orchestrator.run → build_plan → execute_step → call_agent → run_request/run → validate_references → publish_discussion`，重复执行有限的已计划步骤。全部讨论成功后，`begin_aggregation()` 记录聚合入口；DeepSeek 模式执行 `DeepSeekAggregator.run()`，本地模式执行 `aggregate_business() → local_report()`。最后记录 `results_aggregated`、任务成功和 `EvolutionEvent`。
+
+`execution_phase` 明确区分 pending、discussion、aggregation、completed、failed；`termination_reason=round_limit` 表示固定多轮计划结束，不表示共识。`consensus_status=not_established`、`consensus_claimed=false` 是保守标记：即使没有发现明确冲突，也不自动宣布所有角色同意。最终报告中有依据的分歧、未回应问题应保留。
+
+`max_retries` 是每个步骤的额外重试次数。引用冲突或无来源聚合结论会得到明确反馈并有限重试；失败不会污染会话或发布观点。预算耗尽则任务失败、后续步骤跳过，保留已成功的阶段方案，不生成假冒完整性的最终报告。不会无限追加讨论轮数。
+
+引用错误曾由双 ID 的模型历史放大：校验后补齐的 `message_id/quote` 曾写回 assistant 历史。现在 `references.model_history_result()` 仅向模型返回 `view_id/relation/viewpoint`；完整映射留在审计结果。`validate_references()` 继续拒绝真实冲突，不删除非法字段来绕过校验。
+
+最终聚合可读取本任务已完成的公开讨论，避免遗漏早前质疑；这个权限不授予普通业务 Agent。报告证据可只提供合法 `source_id`，后端补齐来源原文；主动填写的 `quote` 仍必须逐字匹配。不存在的来源、编造引文、未引用支持的新数字都会拒绝，并提供具体位置和有限修复机会。引用合法只是可追溯性检查，语义真实性和是否真的解决分歧仍由④组评估。
+
+网页选择 DeepSeek 时，新任务默认启用 DeepSeek 聚合，可手动改为本地报告。API 的 `aggregation` 默认值仍为 `deterministic`，兼容已有调用；需要模型整合时显式传 `"aggregation":"deepseek"`。每轮只显示阶段方案，真正的最终报告完成后自动展开，原始 JSON 和来源仍可折叠查看。
+
 ## 职责边界与兼容方式
 
 - 协作层：选择已注册图、能力路由、消息可见范围、依赖与轮次、有限重试、状态、轨迹和事件导出。
@@ -34,8 +67,9 @@ AgentRequest：
 | strategy_version | 本任务固定的策略版本标识，默认 `baseline`；不由协作层加载策略 |
 | previous_result / previous_result_message_id | 当前 Agent 自己上一轮的成功结果与消息 ID，首轮为空 |
 | collaboration_messages | 仅来自本次可见结果的结构化讨论；独立首轮为空 |
+| visible_views | 后端从本次 context_from 生成的观点目录：view_id、来源消息、Agent、轮次与核心观点 |
 
-AgentResponse：回显 `request_id/task_id/agent_id/strategy_version`，并提供 `result: AgentResult`、`discussion: list[DiscussionItem]`、`final_decision`。可选 `proposed_strategy_version` 是外部 Agent 声明的候选版本标识，仅记录，不自动应用。输出版本不能替代输入版本。
+AgentResponse：回显 `request_id/task_id/agent_id/strategy_version`，并提供 `result: AgentResult`、`discussion: list[DiscussionItem]`、`round_decision`（兼容旧名 `final_decision`）。可选 `proposed_strategy_version` 是外部 Agent 声明的候选版本标识，仅记录，不自动应用。输出版本不能替代输入版本。
 
 旧 Agent 返回 `data.discussion` 和 `data.final_decision` 时，兼容层会提升到统一输出；没有这些字段时 `compatibility_notes` 说明缺失。原始 `Step.result` 不被新接口覆盖，统一输出另存于 `Step.response`。
 
@@ -87,11 +121,31 @@ class TeamMarketingAgent:
 
 Agent 只声明 `type/content/target_agent_id/source_message_ids/reply_to/reason`。运行时生成 `id/task_id/step_id/sender/round_no/result_message_id/strategy_version/created_at`，禁止 Agent 伪造身份。
 
-- `source_message_ids` 可引用本次 `inputs` 的结果消息 ID、自己的 `previous_result_message_id`，或 `case`。
+- `source_message_ids` 推荐引用本次 `visible_views` 中的观点 ID；旧接口仍支持本次 `inputs` 的结果消息 ID、自己的 `previous_result_message_id`，或 `case`。别名必须指向同一可见来源。
 - `reply_to` 关联本次确实收到的 CollaborationMessage ID；用于说明回应了哪条具体质疑。没有回应则为空，不强制采纳观点。
 - 每个成功的结构化返回：首轮至少一条 initial_view，后续轮至少一条有原因的 revision；保留原案也必须解释原因。
 - 公开不等于送达。在固定顺序的 AAD 中，最后一个 Agent 发出的质疑可能要到下一轮才被前面的 Agent 看到。页面会明确标注，不能把未送达的质疑说成已回应。
 - `final_decision` 是各 Agent 的本轮决策，页面取最后成功轮展示。综合报告属于汇总节点，不代表所有 Agent 已达成共识。
+
+## 稳定观点引用与修复
+
+`app/references.py` 集中处理观点目录和引用校验，`business.validate_references` 保留原导入入口。`view_id = view:{task_id}:{step_id}` 由后端生成，一个成功步骤对应一个观点；传输用 `Message.id` 继续独立生成，不能混为观点身份。请求重试只产生新的请求 ID，目录中的成功观点 ID 不变。
+
+目录只从当前请求的真实 `inputs/context_from` 建立，不查询全局任务历史。AAD 盲起草目录为空；随后按固定顺序开放此前成功结果。Sequential 从首轮开始按同样顺序开放。允许引用当前目录中包含的旧轮观点；历史看过但本次目录没有的观点、自己当前观点、未来或跨任务观点均不合法。
+
+模型推荐返回：
+
+```json
+{"references":[{"view_id":"从当前目录复制的ID","relation":"coordinate","viewpoint":"该观点如何影响本轮方案"}]}
+```
+
+无引用可返回 `references: []`，也可省略该字段。模型无需复写引文；后端确认 ID 在本次目录后，从对应成功结果解析来源原文，并补充传输消息 ID 以兼容旧页面和轨迹。若接入方提供了旧式 `message_id/quote`，仍严格校验 ID 与逐字引文；同一引用提供两种 ID 时必须指向同一来源，绝不静默改写错引文。
+
+`invalid_view_reference` 会细分 `unknown_view/quote_mismatch/conflicting_ids/invalid_structure`，记录引用索引及本次合法 ID，不回显未知 ID 或错引文。出现非法引用时，Orchestrator 在已有 max_retries 预算内，把分类、错误位置和当前目录提供给同一 Agent，要求重新选择合法 ID 或明确不引用。失败返回不提交私有历史、不发布为观点、不提供给其他 Agent；预算耗尽正常失败，不扩大目录或自动删除非法引用。
+
+内置 Mock、DeepSeek 与外部 `run_request` 接入均在成功发布前经过同一引用检查。模型上下文不再递归重复同伴结果里的旧引用链，默认仅输出核心观点、必要讨论与结论；完整分析可放 `data.details`。前端首屏保留核心观点、质疑、修订和决策，其余业务条目、引用依据、JSON/Prompt/Trace 折叠保留。
+
+自动化专项测试见 `tests/test_references.py`，覆盖 ID 稳定性、正常与伪造引用、可见旧轮/当前轮观点、不可见/未来/跨任务观点、旧引文校验、引用批次原子性、AAD/Sequential 目录一致性及有限修复。
 
 ## EvolutionEvent：拉取、游标与重放
 

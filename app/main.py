@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.agents import default_agents
-from app.aggregation import DeepSeekAggregator
+from app.aggregation import DeepSeekAggregator, StrategyReport
 from app.business import BusinessMockAgent, DeepSeekAgent, ROLES
 from app.config import Settings, load_settings
 from app.deepseek import DeepSeekAdapter
@@ -20,6 +20,7 @@ from app.graph_selector import GRAPHS, LLMGraphSelector
 from app.models import AgentRequest, AgentResponse, CollaborationMessage, EvolutionEvent, TaskRecord, TaskRequest
 from app.orchestrator import Orchestrator
 from app.store import Store
+from app.references import ViewReference
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -69,7 +70,7 @@ def create_app(db_path: str | None = None, *, settings_loader: Callable[[], Sett
     async def contracts():
         """给接入团队提供机器可读的契约；不要求使用相同的 Python 实现。"""
         return {model.__name__: model.model_json_schema()
-                for model in (AgentRequest, AgentResponse, CollaborationMessage, EvolutionEvent)}
+                for model in (AgentRequest, AgentResponse, CollaborationMessage, EvolutionEvent, ViewReference, StrategyReport)}
 
     @api.get("/api/graphs")
     async def graphs():
